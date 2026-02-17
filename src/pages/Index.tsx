@@ -2,9 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Clock, Truck, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MenuItemCard } from '@/components/MenuItemCard';
-import { menuItems } from '@/data/menu';
-
-const popularItems = menuItems.filter(i => i.popular).slice(0, 4);
+import { getMenuItems } from '@/lib/menu-store';
 
 const features = [
   { icon: Clock, title: 'Fast Delivery', desc: '30 minutes or less' },
@@ -13,6 +11,8 @@ const features = [
 ];
 
 const Index = () => {
+  const popularItems = getMenuItems().filter(i => i.popular).slice(0, 4);
+
   return (
     <>
       {/* Hero */}
