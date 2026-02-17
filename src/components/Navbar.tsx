@@ -1,0 +1,89 @@
+import { Link } from 'react-router-dom';
+import { ShoppingCart, Menu, X, Flame } from 'lucide-react';
+import { useCart } from '@/hooks/use-cart';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
+
+const navLinks = [
+  { to: '/', label: 'Home' },
+  { to: '/menu', label: 'Menu' },
+];
+
+export function Navbar() {
+  const { itemCount } = useCart();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
+      <div className="container flex h-16 items-center justify-between">
+        <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold text-primary">
+          <Flame className="h-6 w-6" />
+          FlameKitchen
+        </Link>
+
+        {/* Desktop nav */}
+        <nav className="hidden items-center gap-6 md:flex">
+          {navLinks.map(link => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <Link to="/cart">
+            <Button variant="outline" size="sm" className="relative gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              Cart
+              {itemCount > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                  {itemCount}
+                </span>
+              )}
+            </Button>
+          </Link>
+        </nav>
+
+        {/* Mobile */}
+        <div className="flex items-center gap-2 md:hidden">
+          <Link to="/cart" className="relative">
+            <Button variant="ghost" size="icon">
+              <ShoppingCart className="h-5 w-5" />
+              {itemCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                  {itemCount}
+                </span>
+              )}
+            </Button>
+          </Link>
+          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Mobile menu */}
+      <div
+        className={cn(
+          'overflow-hidden border-t transition-all duration-300 md:hidden',
+          mobileOpen ? 'max-h-40' : 'max-h-0 border-t-0'
+        )}
+      >
+        <nav className="container flex flex-col gap-2 py-3">
+          {navLinks.map(link => (
+            <Link
+              key={link.to}
+              to={link.to}
+              onClick={() => setMobileOpen(false)}
+              className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+    </header>
+  );
+}
