@@ -1,4 +1,4 @@
-import type { Order } from '@/types';
+import type { Order, OrderStatus } from '@/types';
 
 const ORDERS_KEY = 'flamekitchen_orders';
 
@@ -19,6 +19,14 @@ export function getOrders(): Order[] {
 
 export function getOrderById(id: string): Order | undefined {
   return getOrders().find(o => o.id === id);
+}
+
+export function updateOrderStatus(id: string, status: OrderStatus) {
+  const orders = getOrders();
+  const idx = orders.findIndex(o => o.id === id);
+  if (idx !== -1) orders[idx] = { ...orders[idx], status };
+  localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+  return orders;
 }
 
 export function generateOrderId(): string {

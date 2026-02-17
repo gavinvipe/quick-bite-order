@@ -10,6 +10,10 @@ import MenuPage from "./pages/MenuPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ConfirmationPage from "./pages/ConfirmationPage";
+import AdminLoginPage from "./pages/admin/AdminLoginPage";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import AdminMenuPage from "./pages/admin/AdminMenuPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +32,11 @@ const App = () => (
               <Route path="/cart" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/confirmation/:orderId" element={<ConfirmationPage />} />
+            </Route>
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="orders" element={<AdminOrdersPage />} />
+              <Route path="menu" element={<AdminMenuPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
