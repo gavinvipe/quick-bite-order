@@ -14,7 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      menu_items: {
+        Row: {
+          available: boolean
+          category: string
+          created_at: string
+          description: string
+          id: string
+          image: string
+          name: string
+          popular: boolean
+          price: number
+        }
+        Insert: {
+          available?: boolean
+          category: string
+          created_at?: string
+          description?: string
+          id?: string
+          image?: string
+          name: string
+          popular?: boolean
+          price: number
+        }
+        Update: {
+          available?: boolean
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          image?: string
+          name?: string
+          popular?: boolean
+          price?: number
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_address: string
+          customer_name: string
+          customer_notes: string | null
+          customer_phone: string
+          delivery_fee: number
+          id: string
+          items: Json
+          payment_method: string
+          status: string
+          subtotal: number
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          customer_address: string
+          customer_name: string
+          customer_notes?: string | null
+          customer_phone: string
+          delivery_fee: number
+          id: string
+          items?: Json
+          payment_method: string
+          status?: string
+          subtotal: number
+          total: number
+        }
+        Update: {
+          created_at?: string
+          customer_address?: string
+          customer_name?: string
+          customer_notes?: string | null
+          customer_phone?: string
+          delivery_fee?: number
+          id?: string
+          items?: Json
+          payment_method?: string
+          status?: string
+          subtotal?: number
+          total?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

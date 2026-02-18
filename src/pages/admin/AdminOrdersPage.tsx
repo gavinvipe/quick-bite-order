@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { ClipboardList, Phone, MapPin, Banknote, Smartphone, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const statusOptions: { value: OrderStatus; label: string }[] = [
   { value: 'pending', label: 'Pending' },
@@ -29,15 +30,21 @@ const AdminOrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<OrderStatus | 'all'>('all');
 
-  const refresh = () => {
-    setOrders(getOrders().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  const refresh = async () => {
+    const data = await getOrders();
+    setOrders(data);
   };
 
   useEffect(() => { refresh(); }, []);
 
-  const handleStatusChange = (orderId: string, status: OrderStatus) => {
-    updateOrderStatus(orderId, status);
-    refresh();
+  const handleStatusChange = async (orderId: string, status: OrderStatus) => {
+    try {
+      await updateOrderStatus(orderId, status);
+      await refresh();
+      toast.success('Status updated');
+    } catch {
+      toast.error('Failed to update status');
+    }
   };
 
   const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter);
@@ -91,7 +98,6 @@ const AdminOrdersPage = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                {/* Customer */}
                 <div className="space-y-1 text-sm">
                   <p className="font-medium">{order.customer.fullName}</p>
                   <p className="flex items-center gap-1 text-muted-foreground">
@@ -107,7 +113,6 @@ const AdminOrdersPage = () => {
 
                 <Separator />
 
-                {/* Items */}
                 <div className="space-y-1 text-sm">
                   {order.items.map(({ menuItem, quantity }) => (
                     <div key={menuItem.id} className="flex justify-between">
@@ -119,7 +124,6 @@ const AdminOrdersPage = () => {
 
                 <Separator />
 
-                {/* Total + Payment */}
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-1">
                     {order.paymentMethod === 'cash' ? (
@@ -131,7 +135,6 @@ const AdminOrdersPage = () => {
                   <span className="font-bold text-primary">${order.total.toFixed(2)}</span>
                 </div>
 
-                {/* Status change */}
                 <Select
                   value={order.status}
                   onValueChange={v => handleStatusChange(order.id, v as OrderStatus)}

@@ -1,41 +1,47 @@
-import type { MenuItem } from '@/types';
-import { menuItems as defaultMenuItems } from '@/data/menu';
+import { supabase } from '@/integrations/supabase/client';
+import type { MenuItem, MenuCategory } from '@/types';
 
-const MENU_KEY = 'flamekitchen_menu';
-
-export function getMenuItems(): MenuItem[] {
-  try {
-    const raw = localStorage.getItem(MENU_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return [...defaultMenuItems];
+export async function getMenuItems(): Promise<MenuItem[]> {
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select('*')
+    .order('created_at', { ascending: true });
+  if (error) {
+    console.error('Error fetching menu items:', error);
+    return [];
+  }
+  return (data ?? []).map(row => ({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    price: Number(row.price),
+    image: row.image,
+    category: row.category as MenuCategory,
+    popular: row.popular ?? false,
+    available: row.available ?? true,
+  }));
 }
 
-export function saveMenuItems(items: MenuItem[]) {
-  localStorage.setItem(MENU_KEY, JSON.stringify(items));
+export async function addMenuItem(item: Omit<MenuItem, 'id'>): Promise<void> {
+  const { error } = await supabase.from('menu_items').insert({
+    name: item.name,
+    description: item.description,
+    price: item.price,
+    image: item.image,
+    category: item.category,
+    popular: item.popular ?? false,
+    available: item.available ?? true,
+  });
+  if (error) throw error;
 }
 
-export function addMenuItem(item: MenuItem) {
-  const items = getMenuItems();
-  items.push(item);
-  saveMenuItems(items);
-  return items;
+export async function updateMenuItem(id: string, updates: Partial<MenuItem>): Promise<void> {
+  const { id: _, ...rest } = updates as any;
+  const { error } = await supabase.from('menu_items').update(rest).eq('id', id);
+  if (error) throw error;
 }
 
-export function updateMenuItem(id: string, updates: Partial<MenuItem>) {
-  const items = getMenuItems();
-  const idx = items.findIndex(i => i.id === id);
-  if (idx !== -1) items[idx] = { ...items[idx], ...updates };
-  saveMenuItems(items);
-  return items;
-}
-
-export function deleteMenuItem(id: string) {
-  const items = getMenuItems().filter(i => i.id !== id);
-  saveMenuItems(items);
-  return items;
-}
-
-export function generateMenuItemId(): string {
-  return 'mi-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
+export async function deleteMenuItem(id: string): Promise<void> {
+  const { error } = await supabase.from('menu_items').delete().eq('id', id);
+  if (error) throw error;
 }

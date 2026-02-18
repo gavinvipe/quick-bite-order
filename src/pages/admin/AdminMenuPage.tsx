@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getMenuItems, saveMenuItems, generateMenuItemId, deleteMenuItem } from '@/lib/menu-store';
+import { getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem } from '@/lib/menu-store';
 import { categories } from '@/data/menu';
 import type { MenuItem, MenuCategory } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -15,12 +15,12 @@ import { Plus, Pencil, Trash2, UtensilsCrossed, ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-const emptyItem: Omit<MenuItem, 'id'> = {
+const emptyForm = {
   name: '',
   description: '',
   price: 0,
   image: '',
-  category: 'mains',
+  category: 'mains' as MenuCategory,
   popular: false,
   available: true,
 };
@@ -29,46 +29,51 @@ const AdminMenuPage = () => {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [form, setForm] = useState<Omit<MenuItem, 'id'>>(emptyItem);
+  const [form, setForm] = useState(emptyForm);
   const [filterCat, setFilterCat] = useState<MenuCategory | 'all'>('all');
 
-  const refresh = () => setItems(getMenuItems());
+  const refresh = async () => setItems(await getMenuItems());
   useEffect(() => { refresh(); }, []);
 
   const openAdd = () => {
     setEditingItem(null);
-    setForm(emptyItem);
+    setForm(emptyForm);
     setDialogOpen(true);
   };
 
   const openEdit = (item: MenuItem) => {
     setEditingItem(item);
-    setForm({ name: item.name, description: item.description, price: item.price, image: item.image, category: item.category, popular: item.popular, available: item.available });
+    setForm({ name: item.name, description: item.description, price: item.price, image: item.image, category: item.category, popular: item.popular ?? false, available: item.available ?? true });
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim() || form.price <= 0) {
       toast.error('Name and a valid price are required.');
       return;
     }
-    const allItems = getMenuItems();
-    if (editingItem) {
-      const idx = allItems.findIndex(i => i.id === editingItem.id);
-      if (idx !== -1) allItems[idx] = { ...allItems[idx], ...form };
-    } else {
-      allItems.push({ id: generateMenuItemId(), ...form });
+    try {
+      if (editingItem) {
+        await updateMenuItem(editingItem.id, form);
+      } else {
+        await addMenuItem(form);
+      }
+      await refresh();
+      setDialogOpen(false);
+      toast.success(editingItem ? 'Item updated' : 'Item added');
+    } catch {
+      toast.error('Failed to save item');
     }
-    saveMenuItems(allItems);
-    refresh();
-    setDialogOpen(false);
-    toast.success(editingItem ? 'Item updated' : 'Item added');
   };
 
-  const handleDelete = (id: string) => {
-    deleteMenuItem(id);
-    refresh();
-    toast.success('Item deleted');
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteMenuItem(id);
+      await refresh();
+      toast.success('Item deleted');
+    } catch {
+      toast.error('Failed to delete item');
+    }
   };
 
   const filtered = filterCat === 'all' ? items : items.filter(i => i.category === filterCat);
@@ -145,7 +150,6 @@ const AdminMenuPage = () => {
         </div>
       )}
 
-      {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
