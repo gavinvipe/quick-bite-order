@@ -1,12 +1,27 @@
 import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { getOrderById } from '@/lib/orders';
+import type { Order } from '@/types';
 import { CheckCircle2, ArrowRight, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
 const ConfirmationPage = () => {
   const { orderId } = useParams<{ orderId: string }>();
-  const order = orderId ? getOrderById(orderId) : undefined;
+  const [order, setOrder] = useState<Order | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (orderId) {
+      getOrderById(orderId).then(o => { setOrder(o); setLoading(false); });
+    } else {
+      setLoading(false);
+    }
+  }, [orderId]);
+
+  if (loading) {
+    return <div className="container flex items-center justify-center py-24"><p>Loading...</p></div>;
+  }
 
   if (!order) {
     return (

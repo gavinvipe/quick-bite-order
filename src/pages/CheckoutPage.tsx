@@ -14,6 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Banknote, Smartphone, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const schema = z.object({
   fullName: z.string().trim().min(2, 'Name is required').max(100),
@@ -59,27 +60,33 @@ const CheckoutPage = () => {
     );
   }
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     setSubmitting(true);
-    const order: Order = {
-      id: generateOrderId(),
-      items: [...items],
-      customer: {
-        fullName: data.fullName,
-        phone: data.phone,
-        address: data.address,
-        notes: data.notes,
-      },
-      paymentMethod: data.paymentMethod as PaymentMethod,
-      status: data.paymentMethod === 'momo' ? 'pending' : 'pending',
-      subtotal,
-      deliveryFee,
-      total,
-      createdAt: new Date().toISOString(),
-    };
-    saveOrder(order);
-    clearCart();
-    navigate(`/confirmation/${order.id}`);
+    try {
+      const order: Order = {
+        id: generateOrderId(),
+        items: [...items],
+        customer: {
+          fullName: data.fullName,
+          phone: data.phone,
+          address: data.address,
+          notes: data.notes,
+        },
+        paymentMethod: data.paymentMethod as PaymentMethod,
+        status: 'pending',
+        subtotal,
+        deliveryFee,
+        total,
+        createdAt: new Date().toISOString(),
+      };
+      await saveOrder(order);
+      clearCart();
+      navigate(`/confirmation/${order.id}`);
+    } catch (err) {
+      console.error('Order failed:', err);
+      toast.error('Failed to place order. Please try again.');
+      setSubmitting(false);
+    }
   };
 
   return (

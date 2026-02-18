@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,12 +6,16 @@ import { MenuItemCard } from '@/components/MenuItemCard';
 import { getMenuItems } from '@/lib/menu-store';
 import { categories } from '@/data/menu';
 import { cn } from '@/lib/utils';
-import type { MenuCategory } from '@/types';
+import type { MenuItem, MenuCategory } from '@/types';
 
 const MenuPage = () => {
   const [activeCategory, setActiveCategory] = useState<MenuCategory | 'all'>('all');
   const [search, setSearch] = useState('');
-  const allItems = getMenuItems();
+  const [allItems, setAllItems] = useState<MenuItem[]>([]);
+
+  useEffect(() => {
+    getMenuItems().then(setAllItems);
+  }, []);
 
   const filtered = useMemo(() => {
     let items = allItems.filter(i => i.available);

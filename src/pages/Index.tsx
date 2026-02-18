@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Clock, Truck, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MenuItemCard } from '@/components/MenuItemCard';
 import { getMenuItems } from '@/lib/menu-store';
+import type { MenuItem } from '@/types';
 
 const features = [
   { icon: Clock, title: 'Fast Delivery', desc: '30 minutes or less' },
@@ -11,7 +13,11 @@ const features = [
 ];
 
 const Index = () => {
-  const popularItems = getMenuItems().filter(i => i.popular).slice(0, 4);
+  const [popularItems, setPopularItems] = useState<MenuItem[]>([]);
+
+  useEffect(() => {
+    getMenuItems().then(items => setPopularItems(items.filter(i => i.popular && i.available).slice(0, 4)));
+  }, []);
 
   return (
     <>
