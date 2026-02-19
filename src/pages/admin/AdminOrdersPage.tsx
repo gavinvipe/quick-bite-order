@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { getOrders, updateOrderStatus } from '@/lib/orders';
 import type { Order, OrderStatus } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { ClipboardList, Phone, MapPin, Banknote, Smartphone, RefreshCw } from 'lucide-react';
+import { ClipboardList, Phone, MapPin, Banknote, Smartphone, RefreshCw, Wifi } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -29,18 +30,37 @@ const statusColors: Record<OrderStatus, string> = {
 const AdminOrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<OrderStatus | 'all'>('all');
+  const [connected, setConnected] = useState(false);
 
   const refresh = async () => {
     const data = await getOrders();
     setOrders(data);
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+
+    // Real-time subscription
+    const channel = supabase
+      .channel('admin-orders')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        () => {
+          refresh();
+          toast.info('Orders updated');
+        }
+      )
+      .subscribe((status) => {
+        setConnected(status === 'SUBSCRIBED');
+      });
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const handleStatusChange = async (orderId: string, status: OrderStatus) => {
     try {
       await updateOrderStatus(orderId, status);
-      await refresh();
       toast.success('Status updated');
     } catch {
       toast.error('Failed to update status');
@@ -54,7 +74,12 @@ const AdminOrdersPage = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold md:text-3xl">Orders</h1>
-          <p className="text-sm text-muted-foreground">{orders.length} total orders</p>
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            {orders.length} total orders
+            <span className={cn('inline-flex items-center gap-1 text-xs', connected ? 'text-green-600' : 'text-muted-foreground')}>
+              <Wifi className="h-3 w-3" /> {connected ? 'Live' : 'Connecting...'}
+            </span>
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={filter} onValueChange={v => setFilter(v as OrderStatus | 'all')}>

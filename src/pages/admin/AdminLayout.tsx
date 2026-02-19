@@ -1,5 +1,6 @@
 import { Navigate, Outlet, Link } from 'react-router-dom';
-import { isAdminAuthenticated, adminLogout } from '@/lib/admin-auth';
+import { useAdminAuth } from '@/hooks/use-admin-auth';
+import { adminLogout } from '@/lib/admin-auth';
 import {
   SidebarProvider,
   Sidebar,
@@ -13,26 +14,43 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { NavLink } from '@/components/NavLink';
-import { ClipboardList, UtensilsCrossed, LogOut, Flame, Home } from 'lucide-react';
+import { ClipboardList, UtensilsCrossed, LogOut, Flame, Home, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 
-const navItems = [
-  { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
-  { title: 'Menu Items', url: '/admin/menu', icon: UtensilsCrossed },
-];
-
 const AdminLayout = () => {
+  const { user, roles, loading, hasRole } = useAdminAuth();
   const navigate = useNavigate();
 
-  if (!isAdminAuthenticated()) {
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user || roles.length === 0) {
     return <Navigate to="/admin/login" replace />;
   }
 
-  const handleLogout = () => {
-    adminLogout();
+  const navItems = [
+    { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
+    ...(hasRole('owner', 'manager')
+      ? [{ title: 'Menu Items', url: '/admin/menu', icon: UtensilsCrossed }]
+      : []),
+    ...(hasRole('owner')
+      ? [{ title: 'Staff', url: '/admin/staff', icon: Users }]
+      : []),
+  ];
+
+  const handleLogout = async () => {
+    await adminLogout();
     navigate('/admin/login');
   };
+
+  const roleLabel = roles[0]?.charAt(0).toUpperCase() + roles[0]?.slice(1);
 
   return (
     <SidebarProvider>
@@ -41,6 +59,7 @@ const AdminLayout = () => {
           <div className="flex h-14 items-center gap-2 border-b px-4">
             <Flame className="h-5 w-5 text-primary" />
             <span className="font-display text-lg font-bold">Admin</span>
+            <Badge variant="secondary" className="ml-auto text-xs">{roleLabel}</Badge>
           </div>
           <SidebarContent>
             <SidebarGroup>
@@ -67,6 +86,7 @@ const AdminLayout = () => {
             </SidebarGroup>
 
             <div className="mt-auto space-y-2 border-t p-4">
+              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
               <Link to="/">
                 <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
                   <Home className="h-4 w-4" /> View Site

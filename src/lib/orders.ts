@@ -65,5 +65,5 @@ function mapRowToOrder(row: any): Order {
 }
 
 export function generateOrderId(): string {
-  return 'FK-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase();
+  return 'FK-' + crypto.randomUUID().split('-')[0].toUpperCase();
 }

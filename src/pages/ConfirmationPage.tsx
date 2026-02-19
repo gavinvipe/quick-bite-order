@@ -79,13 +79,15 @@ const ConfirmationPage = () => {
       </div>
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <Link to={`/track?id=${order.id}`}>
+          <Button className="w-full gap-2 sm:w-auto">
+            Track Order <ArrowRight className="h-4 w-4" />
+          </Button>
+        </Link>
         <Link to="/menu">
           <Button variant="outline" className="w-full gap-2 sm:w-auto">
             Order More <ArrowRight className="h-4 w-4" />
           </Button>
-        </Link>
-        <Link to="/">
-          <Button variant="ghost" className="w-full sm:w-auto">Back to Home</Button>
         </Link>
       </div>
     </div>
