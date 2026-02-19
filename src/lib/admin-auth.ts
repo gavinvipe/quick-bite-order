@@ -1,18 +1,45 @@
-const ADMIN_KEY = 'flamekitchen_admin';
-const ADMIN_PASSWORD = 'admin123'; // Demo only — NOT secure for production
+import { supabase } from '@/integrations/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
-export function isAdminAuthenticated(): boolean {
-  return sessionStorage.getItem(ADMIN_KEY) === 'true';
+export type AppRole = 'owner' | 'manager' | 'staff';
+
+export async function getCurrentUser(): Promise<User | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
 }
 
-export function adminLogin(password: string): boolean {
-  if (password === ADMIN_PASSWORD) {
-    sessionStorage.setItem(ADMIN_KEY, 'true');
-    return true;
+export async function getUserRoles(userId: string): Promise<AppRole[]> {
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId);
+  if (error || !data) return [];
+  return data.map(r => r.role as AppRole);
+}
+
+export async function isAdmin(userId: string): Promise<boolean> {
+  const roles = await getUserRoles(userId);
+  return roles.length > 0;
+}
+
+export function hasPermission(roles: AppRole[], required: AppRole[]): boolean {
+  return roles.some(r => required.includes(r));
+}
+
+export async function adminLogin(email: string, password: string): Promise<{ user: User | null; error: string | null }> {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { user: null, error: error.message };
+  
+  // Verify user has an admin role
+  const admin = await isAdmin(data.user.id);
+  if (!admin) {
+    await supabase.auth.signOut();
+    return { user: null, error: 'Access denied. You do not have admin privileges.' };
   }
-  return false;
+  
+  return { user: data.user, error: null };
 }
 
-export function adminLogout() {
-  sessionStorage.removeItem(ADMIN_KEY);
+export async function adminLogout(): Promise<void> {
+  await supabase.auth.signOut();
 }
