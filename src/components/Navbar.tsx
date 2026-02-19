@@ -22,8 +22,8 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold text-primary">
-          <Flame className="h-6 w-6" />
-          FlameKitchen
+          <Frankies className="h-6 w-6" />
+          Fast Food
         </Link>
 
         {/* Desktop nav */}
