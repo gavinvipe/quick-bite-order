@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Order, OrderStatus } from '@/types';
 
-export async function saveOrder(order: Order): Promise<void> {
+export async function saveOrder(order: Order, userId?: string): Promise<void> {
   const { error } = await supabase.from('orders').insert({
     id: order.id,
     items: order.items as any,
@@ -14,6 +14,7 @@ export async function saveOrder(order: Order): Promise<void> {
     subtotal: order.subtotal,
     delivery_fee: order.deliveryFee,
     total: order.total,
+    user_id: userId ?? null,
   });
   if (error) throw error;
 }
@@ -43,6 +44,16 @@ export async function getOrderById(id: string): Promise<Order | undefined> {
 export async function updateOrderStatus(id: string, status: OrderStatus): Promise<void> {
   const { error } = await supabase.from('orders').update({ status }).eq('id', id);
   if (error) throw error;
+}
+
+export async function getOrdersByPhone(phone: string): Promise<Order[]> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('customer_phone', phone)
+    .order('created_at', { ascending: false });
+  if (error || !data) return [];
+  return data.map(mapRowToOrder);
 }
 
 function mapRowToOrder(row: any): Order {

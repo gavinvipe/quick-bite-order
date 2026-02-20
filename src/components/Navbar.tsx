@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Flame, Sun, Moon } from 'lucide-react';
+import { ShoppingCart, Menu, X, Flame, Sun, Moon, Package, User } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
+import { useCustomerAuth } from '@/hooks/use-customer-auth';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
@@ -9,7 +10,29 @@ import { cn } from '@/lib/utils';
 const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/menu', label: 'Menu' },
+  { to: '/track', label: 'Track Order' },
 ];
+
+function AccountLink() {
+  const { user, loading } = useCustomerAuth();
+  if (loading) return null;
+  if (user) {
+    return (
+      <Link to="/my-orders">
+        <Button variant="ghost" size="sm" className="gap-2">
+          <User className="h-4 w-4" /> My Orders
+        </Button>
+      </Link>
+    );
+  }
+  return (
+    <Link to="/auth">
+      <Button variant="ghost" size="sm" className="gap-2">
+        <User className="h-4 w-4" /> Sign In
+      </Button>
+    </Link>
+  );
+}
 
 export function Navbar() {
   const { itemCount } = useCart();
@@ -22,7 +45,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold text-primary">
-          <Frankies className="h-6 w-6" />
+          <Flame className="h-6 w-6" />
           Fast Food
         </Link>
 
@@ -53,6 +76,7 @@ export function Navbar() {
               )}
             </Button>
           </Link>
+          <AccountLink />
         </nav>
 
         {/* Mobile */}
