@@ -1,1 +1,7 @@
 project_id = "xnjuxbjulyfvpddawynh"
+
+[functions.setup-admin]
+verify_jwt = false
+
+[functions.invite-staff]
+verify_jwt = false

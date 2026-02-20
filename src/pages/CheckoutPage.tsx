@@ -4,7 +4,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCart } from '@/hooks/use-cart';
+import { useCustomerAuth } from '@/hooks/use-customer-auth';
 import { generateOrderId, saveOrder } from '@/lib/orders';
+import { addGuestOrderId } from '@/lib/guest-orders';
 import type { Order, PaymentMethod } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +34,7 @@ type FormData = z.infer<typeof schema>;
 
 const CheckoutPage = () => {
   const { items, subtotal, deliveryFee, total, clearCart } = useCart();
+  const { user } = useCustomerAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
 
@@ -79,7 +82,9 @@ const CheckoutPage = () => {
         total,
         createdAt: new Date().toISOString(),
       };
-      await saveOrder(order);
+      await saveOrder(order, user?.id);
+      // Store in localStorage for guest tracking
+      addGuestOrderId(order.id);
       clearCart();
       navigate(`/confirmation/${order.id}`);
     } catch (err) {
