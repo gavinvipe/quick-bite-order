@@ -21,6 +21,7 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminMenuPage from "./pages/admin/AdminMenuPage";
 import AdminStaffPage from "./pages/admin/AdminStaffPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
                     <Route path="/track" element={<TrackOrderPage />} />
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/my-orders" element={<MyOrdersPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
                   </Route>
                   <Route path="/admin/login" element={<AdminLoginPage />} />
                   <Route path="/admin" element={<AdminLayout />}>
