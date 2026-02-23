@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mail, Lock, User, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const AuthPage = () => {
   const { user, signUp, signIn } = useCustomerAuth();
@@ -108,6 +109,23 @@ const AuthPage = () => {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Signing in...' : 'Sign In'}
                 </Button>
+                <button
+                  type="button"
+                  className="w-full text-center text-sm text-primary hover:underline"
+                  onClick={async () => {
+                    if (!loginEmail) {
+                      toast.error('Enter your email first, then click Forgot Password.');
+                      return;
+                    }
+                    const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
+                      redirectTo: `${window.location.origin}/reset-password`,
+                    });
+                    if (error) toast.error(error.message);
+                    else toast.success('Password reset link sent! Check your email.');
+                  }}
+                >
+                  Forgot password?
+                </button>
               </form>
             </TabsContent>
 

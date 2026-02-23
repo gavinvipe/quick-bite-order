@@ -11,8 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Package, Clock, ChefHat, Truck, CheckCircle2, XCircle, Phone } from 'lucide-react';
+import { Package, Clock, ChefHat, Truck, CheckCircle2, XCircle, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const statusSteps: { status: OrderStatus; icon: typeof Clock; label: string }[] = [
@@ -49,10 +48,8 @@ const statusColors: Record<OrderStatus, string> = {
 const TrackOrderPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useCustomerAuth();
-  const [orderId, setOrderId] = useState(searchParams.get('id') ?? '');
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
 
   // Phone recovery state
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -67,7 +64,6 @@ const TrackOrderPage = () => {
   const fetchOrder = async (id: string) => {
     if (!id.trim()) return;
     setLoading(true);
-    setSearched(true);
     const o = await getOrderById(id.trim());
     setOrder(o ?? null);
     setLoading(false);
@@ -146,7 +142,6 @@ const TrackOrderPage = () => {
     loadRecent();
   }, [user]);
 
-  // Auto-search from URL param
   useEffect(() => {
     const id = searchParams.get('id');
     if (id) fetchOrder(id);
@@ -165,12 +160,6 @@ const TrackOrderPage = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [order?.id]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearchParams({ id: orderId });
-    fetchOrder(orderId);
-  };
 
   const handlePhoneLookup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,7 +189,7 @@ const TrackOrderPage = () => {
             <Card
               key={o.id}
               className="cursor-pointer transition-shadow hover:shadow-md"
-              onClick={() => { setOrder(o); setSearchParams({ id: o.id }); setSearched(true); }}
+              onClick={() => { setOrder(o); setSearchParams({ id: o.id }); }}
             >
               <CardContent className="flex items-center justify-between p-4">
                 <div>
@@ -219,97 +208,64 @@ const TrackOrderPage = () => {
         </div>
       )}
 
-      {/* Search tabs */}
+      {/* Phone lookup */}
       {!order && (
-        <Tabs defaultValue="id" className="mb-8">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="id">By Order ID</TabsTrigger>
-            <TabsTrigger value="phone">By Phone Number</TabsTrigger>
-          </TabsList>
+        <div className="mb-8">
+          <form onSubmit={handlePhoneLookup} className="flex gap-2">
+            <div className="flex-1">
+              <Label htmlFor="phone" className="sr-only">Phone Number</Label>
+              <Input
+                id="phone"
+                placeholder="Enter your phone number"
+                value={phoneNumber}
+                onChange={e => setPhoneNumber(e.target.value)}
+              />
+            </div>
+            <Button type="submit" disabled={phoneLoading}>
+              <Phone className="mr-2 h-4 w-4" /> Find Orders
+            </Button>
+          </form>
 
-          <TabsContent value="id">
-            <form onSubmit={handleSubmit} className="flex gap-2 pt-2">
-              <div className="flex-1">
-                <Label htmlFor="orderId" className="sr-only">Order ID</Label>
-                <Input
-                  id="orderId"
-                  placeholder="e.g. FK-ABC123"
-                  value={orderId}
-                  onChange={e => setOrderId(e.target.value)}
-                />
-              </div>
-              <Button type="submit" disabled={loading}>
-                <Search className="mr-2 h-4 w-4" /> Track
-              </Button>
-            </form>
-          </TabsContent>
+          {phoneLoading && <p className="mt-4 text-center text-muted-foreground">Searching...</p>}
 
-          <TabsContent value="phone">
-            <form onSubmit={handlePhoneLookup} className="flex gap-2 pt-2">
-              <div className="flex-1">
-                <Label htmlFor="phone" className="sr-only">Phone Number</Label>
-                <Input
-                  id="phone"
-                  placeholder="+233 24 000 0000"
-                  value={phoneNumber}
-                  onChange={e => setPhoneNumber(e.target.value)}
-                />
-              </div>
-              <Button type="submit" disabled={phoneLoading}>
-                <Phone className="mr-2 h-4 w-4" /> Find
-              </Button>
-            </form>
+          {phoneSearched && !phoneLoading && phoneOrders.length === 0 && (
+            <Card className="mt-4">
+              <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
+                <XCircle className="h-8 w-8 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">No orders found for this phone number.</p>
+              </CardContent>
+            </Card>
+          )}
 
-            {phoneLoading && <p className="mt-4 text-center text-muted-foreground">Searching...</p>}
-
-            {phoneSearched && !phoneLoading && phoneOrders.length === 0 && (
-              <Card className="mt-4">
-                <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
-                  <XCircle className="h-8 w-8 text-muted-foreground/40" />
-                  <p className="text-sm text-muted-foreground">No orders found for this phone number.</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {phoneOrders.length > 0 && (
-              <div className="mt-4 space-y-2">
-                {phoneOrders.map(o => (
-                  <Card
-                    key={o.id}
-                    className="cursor-pointer transition-shadow hover:shadow-md"
-                    onClick={() => { setOrder(o); setSearchParams({ id: o.id }); setSearched(true); }}
-                  >
-                    <CardContent className="flex items-center justify-between p-4">
-                      <div>
-                        <p className="font-mono text-sm font-medium">{o.id}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(o.createdAt).toLocaleDateString()}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-primary">${o.total.toFixed(2)}</span>
-                        <Badge className={cn('border-0 text-xs', statusColors[o.status])}>
-                          {statusLabels[o.status]}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+          {phoneOrders.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {phoneOrders.map(o => (
+                <Card
+                  key={o.id}
+                  className="cursor-pointer transition-shadow hover:shadow-md"
+                  onClick={() => { setOrder(o); setSearchParams({ id: o.id }); }}
+                >
+                  <CardContent className="flex items-center justify-between p-4">
+                    <div>
+                      <p className="font-mono text-sm font-medium">{o.id}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(o.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-primary">${o.total.toFixed(2)}</span>
+                      <Badge className={cn('border-0 text-xs', statusColors[o.status])}>
+                        {statusLabels[o.status]}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {loading && <p className="text-center text-muted-foreground">Looking up order...</p>}
 
-      {searched && !loading && !order && !phoneOrders.length && (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-12 text-center">
-            <XCircle className="h-10 w-10 text-muted-foreground/40" />
-            <p className="font-medium">Order not found</p>
-            <p className="text-sm text-muted-foreground">Double-check the order ID and try again.</p>
-          </CardContent>
-        </Card>
-      )}
 
       {order && (
         <>
@@ -317,7 +273,7 @@ const TrackOrderPage = () => {
             variant="ghost"
             size="sm"
             className="mb-4"
-            onClick={() => { setOrder(null); setSearched(false); setSearchParams({}); }}
+            onClick={() => { setOrder(null); setSearchParams({}); }}
           >
             ← Back to search
           </Button>
