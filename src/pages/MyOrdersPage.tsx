@@ -51,13 +51,18 @@ const MyOrdersPage = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetched, setFetched] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (fetched && !user) return; // Already fetched as guest, no need to refetch
+
+    let cancelled = false;
+    
     const fetchOrders = async () => {
       setLoading(true);
       let allOrders: Order[] = [];
 
-      // Fetch user's orders if logged in
       if (user) {
         const { data } = await supabase
           .from('orders')
@@ -67,7 +72,6 @@ const MyOrdersPage = () => {
         if (data) allOrders = data.map(mapRow);
       }
 
-      // Also fetch guest orders from localStorage
       const guestIds = getGuestOrderIds();
       if (guestIds.length > 0) {
         const { data } = await supabase
@@ -77,7 +81,6 @@ const MyOrdersPage = () => {
           .order('created_at', { ascending: false });
         if (data) {
           const guestOrders = data.map(mapRow);
-          // Merge, avoiding duplicates
           const existingIds = new Set(allOrders.map(o => o.id));
           for (const o of guestOrders) {
             if (!existingIds.has(o.id)) allOrders.push(o);
@@ -85,13 +88,16 @@ const MyOrdersPage = () => {
         }
       }
 
-      // Sort by date
       allOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setOrders(allOrders);
-      setLoading(false);
+      if (!cancelled) {
+        setOrders(allOrders);
+        setLoading(false);
+        setFetched(true);
+      }
     };
 
-    if (!authLoading) fetchOrders();
+    fetchOrders();
+    return () => { cancelled = true; };
   }, [user, authLoading]);
 
   const handleSignOut = async () => {
