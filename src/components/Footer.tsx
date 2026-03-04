@@ -9,7 +9,7 @@ export function Footer() {
           Frankies Fast Food
         </div>
         <p className="text-sm text-muted-foreground">
-          © {new Date().getFullYear()} FlameKitchen. All rights reserved.
+          © {new Date().getFullYear()} Frankies Fast Food. All rights reserved.
         </p>
       </div>
     </footer>
