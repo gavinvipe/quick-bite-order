@@ -55,7 +55,10 @@ const MyOrdersPage = () => {
 
   useEffect(() => {
     if (authLoading) return;
-    if (fetched && !user) return; // Already fetched as guest, no need to refetch
+    if (fetched && !user) {
+      setLoading(false);
+      return;
+    }
 
     let cancelled = false;
     
