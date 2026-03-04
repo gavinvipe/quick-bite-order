@@ -46,7 +46,7 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold text-primary">
           <Flame className="h-6 w-6" />
-          Fast Food
+          Frankies Fast Food
         </Link>
 
         {/* Desktop nav */}
